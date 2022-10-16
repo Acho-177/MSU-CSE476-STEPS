@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Haoyun Mad Hatter</string>
+    <string name="color_string">Color</string>
+    <string name="feather_string">Feather</string>
+    <string name="picture_string">Picture</string>
+
+</resources>
