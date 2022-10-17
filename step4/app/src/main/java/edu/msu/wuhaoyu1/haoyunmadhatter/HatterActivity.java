@@ -4,6 +4,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -14,6 +15,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -59,6 +61,8 @@ public class HatterActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> arg0, View view,
                                        int pos, long id) {
                 getHatterView().setHat(pos);
+
+                updateUI();
             }
 
             @Override
@@ -70,40 +74,14 @@ public class HatterActivity extends AppCompatActivity {
         /*
          * Restore any state
          */
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null){
             getHatterView().getFromBundle(PARAMETERS, savedInstanceState);
-
             getSpinner().setSelection(getHatterView().getHat());
         }
+
+        updateUI();
     }
 
-    /**
-     * The hatter view object
-     */
-    private HatterView getHatterView() {
-        return (HatterView) findViewById(R.id.hatterView);
-    }
-
-    /**
-     * The color select button
-     */
-    private Button getColorButton() {
-        return (Button)findViewById(R.id.buttonColor);
-    }
-
-    /**
-     * The feather checkbox
-     */
-    private CheckBox getFeatherCheck() {
-        return (CheckBox)findViewById(R.id.checkFeather);
-    }
-
-    /**
-     * The hat choice spinner
-     */
-    private Spinner getSpinner() {
-        return (Spinner) findViewById(R.id.spinnerHat);
-    }
 
     /**
      * Handle a Picture button press
@@ -116,6 +94,30 @@ public class HatterActivity extends AppCompatActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
 
         pickImageResultLauncher.launch(intent);
+    }
+
+    /**
+     * Handle a feather checkbox press
+     * @param view
+     */
+    public void onFeather(View view) {
+        getHatterView().setDrawthefeather(!getHatterView().GetDrawthefeather());
+        updateUI();
+    }
+
+    /**
+     * Handle a Color button press
+     * @param view
+     */
+    public void onColor(View view) {
+        // Get a new color for the hat from the color select activity
+        Intent intent = new Intent(this, ColorSelectActivity.class);
+        pickColorResultLauncher.launch(intent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     ActivityResultLauncher pickImageResultLauncher = registerForActivityResult(
@@ -159,6 +161,22 @@ public class HatterActivity extends AppCompatActivity {
                 }
             });
 
+    ActivityResultLauncher<Intent> pickColorResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        // There are no request codes
+                        Intent data = result.getData();
+                        int color = data.getIntExtra(ColorSelectActivity.COLOR, Color.BLACK);
+                        getHatterView().setColor(color);
+
+                        updateUI();
+                    }
+                }
+            });
+
     private static final String PARAMETERS = "parameters";
 
     @Override
@@ -167,4 +185,45 @@ public class HatterActivity extends AppCompatActivity {
 
         getHatterView().putToBundle(PARAMETERS, outState);
     }
+
+    /**
+     * The hatter view object
+     */
+    private HatterView getHatterView() {
+        return (HatterView) findViewById(R.id.hatterView);
+    }
+
+    /**
+     * The color select button
+     */
+    private Button getColorButton() {
+        return (Button)findViewById(R.id.buttonColor);
+    }
+
+    /**
+     * The feather checkbox
+     */
+    private CheckBox getFeatherCheck() {
+        return (CheckBox)findViewById(R.id.checkFeather);
+    }
+
+    /**
+     * The hat choice spinner
+     */
+    private Spinner getSpinner() {
+        return (Spinner) findViewById(R.id.spinnerHat);
+    }
+    /**
+     * Ensure the user interface components match the current state
+     */
+
+    private void updateUI() {
+        getColorButton().setEnabled(getHatterView().getHat() == 2);
+        getFeatherCheck().setChecked(getHatterView().GetDrawthefeather());
+        getSpinner().setSelection(getHatterView().getHat());
+    }
+
+
+
 }
+

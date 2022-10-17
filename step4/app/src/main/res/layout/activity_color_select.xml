@@ -6,4 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".ColorSelectActivity">
 
+    <edu.msu.wuhaoyu1.haoyunmadhatter.ColorSelectView
+        android:id="@+id/colorSelectView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </RelativeLayout>

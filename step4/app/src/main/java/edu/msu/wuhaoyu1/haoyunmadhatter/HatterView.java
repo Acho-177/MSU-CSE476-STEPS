@@ -11,6 +11,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.io.Serializable;
+
+
 /**
  * The view we will draw out hatter in
  */
@@ -95,14 +98,29 @@ public class HatterView extends View {
             canvas.drawBitmap(hatBitmap, 0, 0, null);
         }
 
+        if (hatBitmap != null){
+            if(params.drawthefeather) {
+                // Android scaled images that it loads. The placement of the
+                // feather is at 322, 22 on the original image when it was
+                // 500 pixels wide. It will have to move based on how big
+                // the hat image actually is.
+                float factor = hatBitmap.getWidth() / 500.0f;
+                canvas.drawBitmap(featherBitmap, 322 * factor, 22 * factor, null);
+            }
+        }
+
+
         if(hatbandBitmap != null) {
             canvas.drawBitmap(hatbandBitmap, 0, 0, null);
         }
 
+
+
         canvas.restore();
     }
 
-    private class Parameters {
+
+    private static class Parameters implements Serializable {
         /**
          * Path to the image file if one exists
          */
@@ -137,6 +155,29 @@ public class HatterView extends View {
          * Custom hat color
          */
         public int color = Color.GREEN;
+
+        /**
+         * check draw the feather
+         */
+        public boolean drawthefeather = false;
+
+    }
+
+    /**
+     * Set draw the feather
+     * @param dodraw draw the feather
+     */
+    public void setDrawthefeather(boolean dodraw) {
+        params.drawthefeather = dodraw;
+        setHat(params.hat);
+    }
+
+    /**
+     * Get draw the feather
+
+     */
+    public boolean GetDrawthefeather() {
+        return params.drawthefeather;
     }
 
     /**
@@ -161,8 +202,6 @@ public class HatterView extends View {
 
         imageBitmap = BitmapFactory.decodeFile(imagePath);
         invalidate();
-
-
     }
 
     /**
@@ -198,6 +237,11 @@ public class HatterView extends View {
      * The bitmap to draw the hat
      */
     private Bitmap hatBitmap = null;
+
+    /**
+     * The feather bitmap. None initially.
+     */
+    private Bitmap featherBitmap = null;
 
     /**
      * The bitmap to draw the hat band. We draw this
@@ -236,6 +280,10 @@ public class HatterView extends View {
                 hatBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hat_white);
                 hatbandBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hat_white_band);
                 break;
+        }
+
+        if (params.drawthefeather){
+            featherBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.feather);
         }
 
         invalidate();
@@ -426,6 +474,8 @@ public class HatterView extends View {
             float angle2 = angle(touch1.x, touch1.y, touch2.x, touch2.y);
             float da = angle2 - angle1;
             rotate(da, touch1.x, touch1.y);
+
+            scale();
         }
     }
 
@@ -449,6 +499,19 @@ public class HatterView extends View {
         params.hatX = xp;
         params.hatY = yp;
     }
+
+    /**
+     * Handle the scale of the hat
+     */
+    public void scale()
+    {
+        double scale1 = Math.sqrt(Math.pow((touch2.x-touch1.x), 2) + Math.pow((touch2.y - touch1.y), 2));
+        double scale2 = Math.sqrt(Math.pow((touch2.lastX-touch1.lastX), 2) + Math.pow((touch2.lastY - touch1.lastY), 2));
+        double dscale = scale1 - scale2;
+        double total = scale1 + dscale;
+        params.hatScale *= (float)(total/scale1);
+    }
+
 
     /**
      * Determine the angle for two touches
@@ -495,7 +558,7 @@ public class HatterView extends View {
      * @param bundle bundle to save to
      */
     public void putToBundle(String key, Bundle bundle) {
-
+        bundle.putSerializable(key, params);
 
     }
 
@@ -505,7 +568,14 @@ public class HatterView extends View {
      * @param bundle bundle to load from
      */
     public void getFromBundle(String key, Bundle bundle) {
+        params = (Parameters)bundle.getSerializable(key);
 
 
+        // Ensure the options are all set
+        setColor(params.color);
+        setImagePath(params.imagePath);
+        setHat(params.hat);
     }
+
+
 }
